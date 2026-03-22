@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplement Discount Dashboard - Srbija</title>
+    <link rel="stylesheet" href="assets/css/supplement-styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-content">
+            <h1>Supplement Discount Dashboard</h1>
+            <p class="subtitle">Svi suplementi na popustu u Srbiji - na jednom mestu</p>
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+    </header>
+
+    <!-- Weekly Summary (collapsible) -->
+    <section class="weekly-summary" id="weeklySummary">
+        <div class="summary-header" onclick="toggleSummary()">
+            <h2>Nedeljni pregled popusta</h2>
+            <span class="toggle-icon" id="summaryToggle">&#9660;</span>
+        </div>
+        <div class="summary-content" id="summaryContent">
+            <div class="summary-stats" id="summaryStats"></div>
+            <div class="summary-grid">
+                <div class="summary-card" id="storeBreakdown">
+                    <h3>Po prodavnici</h3>
+                    <div class="breakdown-list"></div>
+                </div>
+                <div class="summary-card" id="categoryBreakdown">
+                    <h3>Po kategoriji</h3>
+                    <div class="breakdown-list"></div>
+                </div>
+                <div class="summary-card" id="topDeals">
+                    <h3>Najbolji popusti</h3>
+                    <div class="breakdown-list"></div>
+                </div>
+                <div class="summary-card" id="weekChanges">
+                    <h3>Promene ove nedelje</h3>
+                    <div class="breakdown-list"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filter & Sort Bar -->
+    <section class="controls-bar" id="controlsBar">
+        <div class="controls-inner">
+            <!-- Search -->
+            <div class="control-group search-group">
+                <input type="text" id="searchInput" placeholder="Pretrazi suplemente..." autocomplete="off">
+            </div>
+
+            <!-- View mode -->
+            <div class="control-group view-group">
+                <button class="view-btn active" id="btnDiscountsOnly" onclick="setViewMode('discounts')">Na popustu</button>
+                <button class="view-btn" id="btnAllProducts" onclick="setViewMode('all')">Svi proizvodi</button>
+            </div>
+
+            <!-- Store filter -->
+            <div class="control-group filter-group">
+                <label>Prodavnica:</label>
+                <div class="filter-checkboxes" id="storeFilters"></div>
+            </div>
+
+            <!-- Category filter -->
+            <div class="control-group filter-group">
+                <label>Kategorija:</label>
+                <select id="categoryFilter">
+                    <option value="">Sve kategorije</option>
+                </select>
+            </div>
+
+            <!-- Discount range -->
+            <div class="control-group filter-group">
+                <label>Min popust: <span id="discountRangeValue">0%</span></label>
+                <input type="range" id="discountRange" min="0" max="80" value="0" step="5">
+            </div>
+
+            <!-- Sort -->
+            <div class="control-group sort-group">
+                <label>Sortiraj:</label>
+                <select id="sortSelect">
+                    <option value="discount_desc">Popust % (najveci)</option>
+                    <option value="discount_asc">Popust % (najmanji)</option>
+                    <option value="price_asc">Cena (najniza)</option>
+                    <option value="price_desc">Cena (najvisa)</option>
+                    <option value="name_asc">Naziv (A-Z)</option>
+                    <option value="name_desc">Naziv (Z-A)</option>
+                    <option value="savings_desc">Usteda (najveca)</option>
+                </select>
+            </div>
+        </div>
+        <div class="results-count" id="resultsCount"></div>
+    </section>
+
+    <!-- Product Grid -->
+    <main class="product-grid-container">
+        <div class="product-grid" id="productGrid"></div>
+        <div class="load-more-container" id="loadMoreContainer" style="display:none;">
+            <button class="load-more-btn" id="loadMoreBtn" onclick="loadMore()">Ucitaj jos proizvoda</button>
+        </div>
+        <div class="no-results" id="noResults" style="display:none;">
+            <p>Nema proizvoda koji odgovaraju filterima.</p>
+        </div>
+        <div class="loading" id="loading" style="display:none;">
+            <p>Ucitavanje podataka...</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-content">
+            <p>Podaci prikupljeni sa <span id="storeCount">0</span> online prodavnica suplemenata u Srbiji</p>
+            <p class="footer-stores" id="footerStores"></p>
+            <p class="footer-disclaimer">Cene i popusti se mogu promeniti. Proverite aktuelne cene na sajtu prodavnice pre kupovine.</p>
+        </div>
+    </footer>
+
+    <!-- Embedded JSON Data (replaced by scraper) -->
+    <script type="application/json" id="supplementsData">/* __SUPPLEMENT_DATA_PLACEHOLDER__ */</script>
+
+    <script src="assets/js/supplement-dashboard.js"></script>
+</body>
+</html>
