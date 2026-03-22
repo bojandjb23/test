@@ -232,6 +232,14 @@ def main():
         "--list-stores", action="store_true",
         help="List all available store scrapers and exit."
     )
+    parser.add_argument(
+        "--serve", action="store_true",
+        help="Start a local web server to view the dashboard after scraping."
+    )
+    parser.add_argument(
+        "--port", type=int, default=8000,
+        help="Port for the web server (default: 8000). Used with --serve."
+    )
 
     args = parser.parse_args()
 
@@ -346,6 +354,28 @@ def main():
     if not args.no_dashboard:
         print(f"  Dashboard at:   {DASHBOARD_OUTPUT}")
     print(f"{'='*60}\n")
+
+    # Start web server if requested
+    if args.serve and not args.no_dashboard:
+        import functools
+        import http.server
+        import socketserver
+
+        dashboard_dir = os.path.dirname(DASHBOARD_OUTPUT) or "."
+        dashboard_filename = os.path.basename(DASHBOARD_OUTPUT)
+        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=dashboard_dir)
+
+        try:
+            with socketserver.TCPServer(("0.0.0.0", args.port), handler) as httpd:
+                url = f"http://localhost:{args.port}/{dashboard_filename}"
+                print(f"  Dashboard server running at: {url}")
+                print(f"  Press Ctrl+C to stop.\n")
+                httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\n  Server stopped.")
+        except OSError as e:
+            logger.error(f"Could not start server on port {args.port}: {e}")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
