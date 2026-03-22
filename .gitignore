@@ -20,3 +20,6 @@ substack_html_pages/*
 
 # Ignore substack_md_files directory
 /substack_md_files/
+
+# Ignore generated supplement dashboard output
+supplement_dashboard_live.html
