@@ -1,0 +1,98 @@
+name: Scrape & Deploy Dashboard
+
+on:
+  # Run every 6 hours to keep data fresh
+  schedule:
+    - cron: "0 */6 * * *"
+  # Allow manual trigger
+  workflow_dispatch:
+  # Also run on push to main so first deployment works immediately
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python supplement_scraper.py --no-dashboard
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site
+          python -c "
+          import json, os
+
+          data_path = 'data/supplements.json'
+          if os.path.exists(data_path):
+              with open(data_path, 'r') as f:
+                  data = json.load(f)
+          else:
+              # Fallback: empty but valid data so dashboard renders
+              from datetime import datetime
+              data = {
+                  'scraped_at': datetime.now().isoformat(),
+                  'stores_scraped': [],
+                  'stores_failed': ['All stores - scraping in progress'],
+                  'total_products': 0,
+                  'total_discounted': 0,
+                  'products': [],
+                  'weekly_summary': {
+                      'total_products': 0,
+                      'total_discounted': 0,
+                      'avg_discount_percent': 0,
+                      'top_discounts': [],
+                      'by_store': {},
+                      'by_category': {},
+                      'new_discounts_count': 0,
+                      'ended_discounts_count': 0,
+                      'deeper_discounts_count': 0,
+                  }
+              }
+
+          with open('supplement_dashboard.html', 'r') as f:
+              template = f.read()
+          json_str = json.dumps(data, ensure_ascii=False)
+          output = template.replace('/* __SUPPLEMENT_DATA_PLACEHOLDER__ */', json_str)
+          with open('_site/index.html', 'w') as f:
+              f.write(output)
+          "
+          # Copy assets
+          cp -r assets _site/assets
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
