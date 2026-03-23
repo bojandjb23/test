@@ -1,0 +1,68 @@
+name: Scrape & Deploy Dashboard
+
+on:
+  # Run daily at 6:00 AM UTC (8:00 AM Belgrade time)
+  schedule:
+    - cron: "0 6 * * *"
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scraper
+        run: python supplement_scraper.py --no-dashboard
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site
+          # Generate dashboard with data embedded
+          python -c "
+          import json, os
+          with open('data/supplements.json', 'r') as f:
+              data = json.load(f)
+          with open('supplement_dashboard.html', 'r') as f:
+              template = f.read()
+          json_str = json.dumps(data, ensure_ascii=False)
+          output = template.replace('/* __SUPPLEMENT_DATA_PLACEHOLDER__ */', json_str)
+          with open('_site/index.html', 'w') as f:
+              f.write(output)
+          "
+          # Copy assets
+          cp -r assets _site/assets
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
